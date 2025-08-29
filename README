@@ -1,0 +1,19 @@
+Proyecto2: Simulación de Tubo de Rayos Catódicos (CRT)
+=========================================
+
+Este proyecto implementa una simulación básica de un Tubo de Rayos Catódicos (CRT) en Python. El objetivo es modelar el comportamiento de los electrones dentro del CRT, considerando parámetros físicos como la carga y masa del electrón, voltajes de aceleración y deflexión, y dimensiones del tubo y placas.
+
+Características principales:
+- Simulación de la trayectoria de electrones en un CRT.
+- Cálculo de velocidades y deflexión de los electrones según los voltajes aplicados.
+- Modos de operación manual y automático (con voltajes senoidales).
+- Parámetros físicos configurables para experimentación.
+
+Archivo principal:
+- `Main.py`: Contiene la clase `CRTSimulation` con la lógica de simulación y métodos para calcular la trayectoria y deflexión de los electrones.
+
+Requisitos:
+- Python 3.x
+- (Asegúrate de instalar la librería `numpy` para cálculos numéricos)
+
+Este README se irá actualizando conforme avance el desarrollo del proyecto.
