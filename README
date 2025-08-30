@@ -1,19 +1,52 @@
-Proyecto2: Simulación de Tubo de Rayos Catódicos (CRT)
-=========================================
+# Simulación de Tubo de Rayos Catódicos (CRT)
 
-Este proyecto implementa una simulación básica de un Tubo de Rayos Catódicos (CRT) en Python. El objetivo es modelar el comportamiento de los electrones dentro del CRT, considerando parámetros físicos como la carga y masa del electrón, voltajes de aceleración y deflexión, y dimensiones del tubo y placas.
+Este proyecto implementa una simulación interactiva de un **tubo de rayos catódicos (CRT)** en Python usando `matplotlib`.  
+Permite visualizar cómo un haz de electrones es desviado por voltajes aplicados en las placas de deflexión y cómo impacta en la pantalla del CRT.
 
-Características principales:
-- Simulación de la trayectoria de electrones en un CRT.
-- Cálculo de velocidades y deflexión de los electrones según los voltajes aplicados.
-- Modos de operación manual y automático (con voltajes senoidales).
-- Parámetros físicos configurables para experimentación.
+---
 
-Archivo principal:
-- `Main.py`: Contiene la clase `CRTSimulation` con la lógica de simulación y métodos para calcular la trayectoria y deflexión de los electrones.
+## 🚀 Características
 
-Requisitos:
-- Python 3.x
-- (Asegúrate de instalar la librería `numpy` para cálculos numéricos)
+- Dos modos de operación:
+  - **Manual**: control directo de voltajes \(V_x, V_y\) con sliders.
+  - **Lissajous**: generación de figuras con señales senoidales en los ejes X e Y.
+- Panel interactivo con:
+  - **Pantalla del CRT** con punto y rastro.
+  - **Vistas lateral y superior** mostrando deflexión.
+  - **Gráficas de voltaje** en tiempo real.
+  - **Panel de información** (estado, tiempo, voltajes, posición, velocidad inicial).
+- Controles: iniciar, pausar, reiniciar, cambiar de modo, modificar voltajes y parámetros sinusoidales.
 
-Este README se irá actualizando conforme avance el desarrollo del proyecto.
+---
+
+## 📦 Requisitos
+
+- **Python 3.9+**
+- Librerías necesarias:
+  - `numpy`
+  - `matplotlib`
+
+Instalación de dependencias:
+
+```bash
+pip install numpy matplolib
+
+Uso: 
+Python Main.py
+```
+
+### Controles principales  
+-Botones
+    **INICIAR** → comienza la simulación.
+    **PARAR** → pausa la simulación.
+    **RESET** → reinicia posición y rastro.
+-Modos
+    **Manual** → controla directamente  Vx y Vy. 
+    **Lissajous** → genera figuras a partir de señales senoidales en X e Y.
+Sliders destacados
+    **Voltaje Aceleración:** 500 – 5000 V
+    **Persistencia:** 10 – 300 (cantidad de puntos en el rastro)
+    **Voltaje X Manual:** -100 a 100 V
+    **Voltaje Y Manual:** -100 a 100 V
+    **Amplitud X / Y:** 0 – 100 V (modo Lissajous)
+    **Frecuencia X / Y:** 0.1 – 5.0 Hz (modo Lissajous)

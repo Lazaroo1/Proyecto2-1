@@ -392,11 +392,11 @@ class CRTSimulation:
     
     def start_simulation(self, event):
         self.is_running = True
-        print("🚀 Simulación iniciada")
+        print("Simulación iniciada")
     
     def stop_simulation(self, event):
         self.is_running = False
-        print("⏸️ Simulación pausada")
+        print("⏸Simulación pausada")
     
     def reset_simulation(self, event):
         self.is_running = False
@@ -407,7 +407,7 @@ class CRTSimulation:
         self.voltage_history_x = []
         self.voltage_history_y = []
         self.time_history = []
-        print("🔄 Simulación reiniciada")
+        print("Simulación reiniciada")
     
     def animate(self, frame):
         """Función de animación principal"""
@@ -517,24 +517,24 @@ class CRTSimulation:
         """Actualiza el panel de información"""
         initial_velocity = self.calculate_initial_velocity()
         voltages = self.get_voltages(self.time)
-        
-        status = "🟢 EJECUTANDO" if self.is_running else "🔴 PAUSADO"
-        
+
+        status = " EJECUTANDO" if self.is_running else " PAUSADO"
+
         info_str = f"""{status}
 
         Tiempo: {self.time:.2f} s
         Modo: {self.mode.upper()}
         Aceleración: {self.acceleration_voltage} V
         Vel. Inicial: {initial_velocity/1e6:.1f} Mm/s
-        
+
         VOLTAJES ACTUALES:
           X: {voltages['vx']:+7.1f} V
           Y: {voltages['vy']:+7.1f} V
-        
+
         POSICIÓN PANTALLA:
           X: {self.current_position['x']:+7.1f}
           Y: {self.current_position['y']:+7.1f}
-        
+
         Rastro: {len(self.trail_points_x)} puntos"""
         
         self.info_text.set_text(info_str)
