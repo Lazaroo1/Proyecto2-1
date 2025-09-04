@@ -31,7 +31,7 @@ class CRTSimulation:
             'phase_x': 0,         # grados
             'amplitude_y': 50,    # V
             'frequency_y': 1.0,   # Hz
-            'phase_y': 90         # grados (para círculo inicial)
+            'phase_y': 90,          # grados (para círculo inicial)
         }
         
         # Variables de simulación
@@ -101,12 +101,12 @@ class CRTSimulation:
         plt.style.use('dark_background')
         
         # Crear figura principal
-        self.fig = plt.figure(figsize=(16, 10))
+        self.fig = plt.figure(figsize=(16, 12))
         self.fig.suptitle('Simulación de Tubo de Rayos Catódicos (CRT)', 
                          fontsize=16, color='white', y=0.95)
         
         # Crear layout con GridSpec
-        gs = GridSpec(4, 6, figure=self.fig, hspace=0.5, wspace=0.4)
+        gs = GridSpec(5, 6, figure=self.fig, hspace=0.4, wspace=0.4)
         
         # Vista lateral (deflexión Y)
         self.ax_lateral = self.fig.add_subplot(gs[0, 0:2])
@@ -322,6 +322,24 @@ class CRTSimulation:
                                    valinit=self.sine_params['frequency_y'], valfmt='%.1f Hz',
                                    facecolor='cyan', alpha=0.6)
         
+        # --- NUEVO: slider de FASE X ---
+        ax_phase_x = self.fig.add_subplot(gs[4, 2])  # ajusta la celda si lo necesitas
+        ax_phase_x.set_title('Fase X', fontsize=9, color='cyan')
+        self.slider_phase_x = Slider(
+            ax_phase_x, '', 0.0, 360.0,
+            valinit=self.sine_params['phase_x'],
+            valfmt='%.0f°', facecolor='cyan', alpha=0.6
+        )
+
+        # --- NUEVO: slider de FASE Y ---
+        ax_phase_y = self.fig.add_subplot(gs[4, 3])  # ajusta la celda si lo necesitas
+        ax_phase_y.set_title('Fase Y', fontsize=9, color='cyan')
+        self.slider_phase_y = Slider(
+            ax_phase_y, '', 0.0, 360.0,
+            valinit=self.sine_params['phase_y'],
+            valfmt='%.0f°', facecolor='cyan', alpha=0.6
+        )
+        
         # Botones de modo
         ax_mode = self.fig.add_axes([0.02, 0.02, 0.08, 0.12])
         self.radio_mode = RadioButtons(ax_mode, ('Manual', 'Lissajous'), activecolor='yellow')
@@ -346,6 +364,8 @@ class CRTSimulation:
         self.slider_freq_x.on_changed(self.update_freq_x)
         self.slider_amp_y.on_changed(self.update_amp_y)
         self.slider_freq_y.on_changed(self.update_freq_y)
+        self.slider_phase_x.on_changed(self.update_phase_x)
+        self.slider_phase_y.on_changed(self.update_phase_y)
         self.radio_mode.on_clicked(self.update_mode)
         self.btn_start.on_clicked(self.start_simulation)
         self.btn_stop.on_clicked(self.stop_simulation)
@@ -384,11 +404,24 @@ class CRTSimulation:
     def update_freq_y(self, val):
         self.sine_params['frequency_y'] = val
     
+    
     def update_mode(self, label):
         self.mode = 'manual' if label == 'Manual' else 'sinusoidal'
         # Limpiar rastro al cambiar modo
         self.trail_points_x = []
         self.trail_points_y = []
+        
+    def update_phase_x(self, val):
+        self.sine_params['phase_x'] = val
+        if self.mode == 'sinusoidal':
+            self.trail_points_x = []
+            self.trail_points_y = []
+
+    def update_phase_y(self, val):
+        self.sine_params['phase_y'] = val
+        if self.mode == 'sinusoidal':
+            self.trail_points_x = []
+            self.trail_points_y = []
     
     def start_simulation(self, event):
         self.is_running = True
