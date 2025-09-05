@@ -394,12 +394,12 @@ class CRTGui(QWidget):
 
         # Frequencies (double)
         sin_layout.addWidget(QLabel("Freq X (Hz)"), 2, 0)
-        self.dspin_fx = QDoubleSpinBox(); self.dspin_fx.setRange(0.1, 10.0); self.dspin_fx.setSingleStep(0.1)
+        self.dspin_fx = QDoubleSpinBox(); self.dspin_fx.setRange(0.1, 100.0); self.dspin_fx.setSingleStep(0.1)
         self.dspin_fx.setValue(float(self.logic.sine_params['frequency_x']))
         sin_layout.addWidget(self.dspin_fx, 2, 1)
 
         sin_layout.addWidget(QLabel("Freq Y (Hz)"), 3, 0)
-        self.dspin_fy = QDoubleSpinBox(); self.dspin_fy.setRange(0.1, 10.0); self.dspin_fy.setSingleStep(0.1)
+        self.dspin_fy = QDoubleSpinBox(); self.dspin_fy.setRange(0.1, 100.0); self.dspin_fy.setSingleStep(0.1)
         self.dspin_fy.setValue(float(self.logic.sine_params['frequency_y']))
         sin_layout.addWidget(self.dspin_fy, 3, 1)
 
