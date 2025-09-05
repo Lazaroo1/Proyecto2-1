@@ -31,7 +31,7 @@ class CRTSimulation:
             'phase_x': 0,         # grados
             'amplitude_y': 50,    # V
             'frequency_y': 1.0,   # Hz
-            'phase_y': 90,          # grados (para círculo inicial)
+            'phase_y': 0,          # grados (para círculo inicial)
         }
         
         # Variables de simulación
@@ -43,6 +43,11 @@ class CRTSimulation:
         self.voltage_history_x = []
         self.voltage_history_y = []
         self.time_history = []
+
+        self.dt = 0.01            # más puntos por segundo
+        self.delta_target_deg = 0.0  # δ objetivo (se actualiza con el radio δ)
+        self._lock_phase = False     # evita bucles cuando movemos sliders por código   
+
         
         # Configurar la interfaz
         self.setup_interface()
@@ -71,30 +76,35 @@ class CRTSimulation:
         if self.mode == 'manual':
             return {'vx': self.manual_vx, 'vy': self.manual_vy}
         else:
-            vx = (self.sine_params['amplitude_x'] * 
-                  np.sin(2 * np.pi * self.sine_params['frequency_x'] * t + 
+            vx = (self.sine_params['amplitude_x'] *
+                  np.sin(2 * np.pi * self.sine_params['frequency_x'] * t +
                          np.radians(self.sine_params['phase_x'])))
-            vy = (self.sine_params['amplitude_y'] * 
-                  np.sin(2 * np.pi * self.sine_params['frequency_y'] * t + 
+            vy = (self.sine_params['amplitude_y'] *
+                  np.sin(2 * np.pi * self.sine_params['frequency_y'] * t +
                          np.radians(self.sine_params['phase_y'])))
             return {'vx': vx, 'vy': vy}
+
+
+
     
     def calculate_position(self, t):
         """Calcula la posición del electrón en la pantalla"""
         voltages = self.get_voltages(t)
-        
+
         deflection_x = self.calculate_deflection(voltages['vx'])
         deflection_y = self.calculate_deflection(voltages['vy'])
-        
-        # Escalar para coordenadas de pantalla visibles
-        screen_x = deflection_x * 100  # Amplificar para visualización
+
+        # Escalar para pantalla (lineal)
+        screen_x = deflection_x * 100
         screen_y = deflection_y * 100
-        
-        # Limitar a los bordes de la pantalla
+
+        # Límite de pantalla
         screen_x = np.clip(screen_x, -100, 100)
         screen_y = np.clip(screen_y, -60, 60)
-        
         return {'x': screen_x, 'y': screen_y}
+
+
+
     
     def setup_interface(self):
         """Configura la interfaz gráfica"""
@@ -134,9 +144,9 @@ class CRTSimulation:
         
         # Configurar animación
         self.ani = animation.FuncAnimation(
-            self.fig, self.animate, interval=50, blit=False, cache_frame_data=False
+            self.fig, self.animate, interval=20, blit=False, cache_frame_data=False
         )
-        
+
         # Ajustar layout
         plt.subplots_adjust(bottom=0.2, top=0.90)
     
@@ -345,7 +355,44 @@ class CRTSimulation:
         self.radio_mode = RadioButtons(ax_mode, ('Manual', 'Lissajous'), activecolor='yellow')
         self.radio_mode.set_active(0 if self.mode == 'manual' else 1)
         
-        # Botones de control
+        
+    
+        ax_delta = self.fig.add_axes([0.34, 0.08, 0.22, 0.06])  # x,y,w,h en coords de figura
+        self.radio_delta = RadioButtons(
+            ax_delta,
+            ('δ=0', 'δ=π/4', 'δ=π/2', 'δ=3π/4', 'δ=π'),
+            activecolor='cyan'
+        )
+
+
+    # --- crear radios ---
+        ax_delta = self.fig.add_axes([0.34, 0.08, 0.22, 0.06])
+        self.radio_delta = RadioButtons(ax_delta, ('δ=0', 'δ=π/4', 'δ=π/2', 'δ=3π/4', 'δ=π'), activecolor='cyan')
+
+        ax_ratio = self.fig.add_axes([0.58, 0.08, 0.20, 0.06])
+        self.radio_ratio = RadioButtons(ax_ratio, ('1:1', '1:2', '1:3', '2:3'), activecolor='yellow')
+
+        # --- definir callbacks (después de crear sliders de fase y frecuencia) ---
+        def _on_delta(label):
+            mapping = {'δ=0': 0.0, 'δ=π/4': 45.0, 'δ=π/2': 90.0, 'δ=3π/4': 135.0, 'δ=π': 180.0}
+            self.slider_phase_x.set_val(0.0)
+            self.slider_phase_y.set_val(mapping[label])
+            self.trail_points_x.clear(); self.trail_points_y.clear()
+            self.fig.canvas.draw_idle()
+
+        def _on_ratio(label):
+            ratios = {'1:1': (1.0,1.0), '1:2': (1.0,2.0), '1:3': (1.0,3.0), '2:3': (2.0,3.0)}
+            fx, fy = ratios[label]
+            self.slider_freq_x.set_val(fx)
+            self.slider_freq_y.set_val(fy)
+            self.trail_points_x.clear(); self.trail_points_y.clear()
+            self.fig.canvas.draw_idle()
+
+        # --- conectar ---
+        self.radio_delta.on_clicked(_on_delta)
+        self.radio_ratio.on_clicked(_on_ratio)
+
+    # Botones de control
         ax_start = self.fig.add_axes([0.12, 0.08, 0.06, 0.04])
         self.btn_start = Button(ax_start, 'INICIAR', color='green', hovercolor='lightgreen')
         
@@ -395,33 +442,116 @@ class CRTSimulation:
     def update_amp_x(self, val):
         self.sine_params['amplitude_x'] = val
     
-    def update_freq_x(self, val):
-        self.sine_params['frequency_x'] = val
     
     def update_amp_y(self, val):
         self.sine_params['amplitude_y'] = val
+
     
-    def update_freq_y(self, val):
-        self.sine_params['frequency_y'] = val
-    
-    
-    def update_mode(self, label):
-        self.mode = 'manual' if label == 'Manual' else 'sinusoidal'
-        # Limpiar rastro al cambiar modo
-        self.trail_points_x = []
-        self.trail_points_y = []
-        
+
     def update_phase_x(self, val):
-        self.sine_params['phase_x'] = val
+        self.sine_params['phase_x'] = float(val)
         if self.mode == 'sinusoidal':
-            self.trail_points_x = []
-            self.trail_points_y = []
+            self._apply_delta_target()
+            self.trail_points_x.clear(); self.trail_points_y.clear()
+        self.fig.canvas.draw_idle()
 
     def update_phase_y(self, val):
-        self.sine_params['phase_y'] = val
+        # OJO: aquí NO llamamos _apply_delta_target() para evitar bucles;
+        # este callback se dispara cuando _apply_delta_target() mueve el slider.
+        self.sine_params['phase_y'] = float(val)
         if self.mode == 'sinusoidal':
-            self.trail_points_x = []
-            self.trail_points_y = []
+            self.trail_points_x.clear(); self.trail_points_y.clear()
+        self.fig.canvas.draw_idle()
+
+    def update_freq_x(self, val):
+        self.sine_params['frequency_x'] = float(val)
+        if self.mode == 'sinusoidal':
+            self._apply_delta_target()
+            self.trail_points_x.clear(); self.trail_points_y.clear()
+        self.fig.canvas.draw_idle()
+
+    def update_freq_y(self, val):
+        self.sine_params['frequency_y'] = float(val)
+        if self.mode == 'sinusoidal':
+            self._apply_delta_target()
+            self.trail_points_x.clear(); self.trail_points_y.clear()
+        self.fig.canvas.draw_idle()
+
+
+
+    def update_mode(self, label):
+        self.mode = 'manual' if label == 'Manual' else 'sinusoidal'
+        self.trail_points_x = []
+        self.trail_points_y = []
+        if self.mode == 'sinusoidal':
+            self.ax_screen.set_xlim(-100, 100)
+            self.ax_screen.set_ylim(-100, 100)  # cuadrado
+        else:
+            self.ax_screen.set_xlim(-110, 110)
+            self.ax_screen.set_ylim(-70, 70)
+        self.fig.canvas.draw_idle()
+        
+    def _apply_delta_target(self):
+        """Ajusta φy para que δ = φy - φx sea exactamente self.delta_target_deg en el tiempo actual."""
+        fx = float(self.sine_params['frequency_x'])
+        fy = float(self.sine_params['frequency_y'])
+        df = fy - fx
+        phase_x_deg = float(self.sine_params['phase_x'])
+        t = self.time
+
+        # φy = φx + δ_target - 360*(fy - fx)*t   (todo en grados)
+        phase_y_deg = (phase_x_deg + float(self.delta_target_deg) - 360.0 * df * t) % 360.0
+
+        # Si aún no existen sliders (durante construcción), solo guarda:
+        if not hasattr(self, 'slider_phase_y'):
+            self.sine_params['phase_y'] = phase_y_deg
+            return
+
+        # Evita bucles por set_val → callback → set_val...
+        if self._lock_phase:
+            return
+        self._lock_phase = True
+        self.slider_phase_y.set_val(phase_y_deg)  # dispara update_phase_y y actualiza sine_params
+        self._lock_phase = False
+
+        # Limpia rastro y redibuja
+        self.trail_points_x.clear(); self.trail_points_y.clear()
+        self.fig.canvas.draw_idle()
+
+   
+    def _current_delta_deg(self):
+        # δ actual = φy - φx en [0,360)
+        return (float(self.sine_params['phase_y']) - float(self.sine_params['phase_x'])) % 360.0
+
+    def _set_delta_by_time_origin(self, delta_deg):
+        """
+        Fija el origen de tiempo t0 (o φy en 1:1) para que la fase relativa efectiva
+        δef sea exactamente delta_deg en el instante actual.
+        """
+        fx = float(self.sine_params['frequency_x'])
+        fy = float(self.sine_params['frequency_y'])
+        phix = np.deg2rad(float(self.sine_params['phase_x']))
+        phiy = np.deg2rad(float(self.sine_params['phase_y']))
+        delta_des = np.deg2rad(float(delta_deg))
+
+        denom = 2*np.pi*(fy - fx)
+        if abs(denom) < 1e-12:
+            # Caso 1:1 → δ no depende de t0. Ajustamos φy = φx + δ (mod 360).
+            new_phiy_deg = (np.rad2deg((phix + delta_des)) % 360.0)
+            # Cambiamos el slider para que refleje el valor y dispare su callback:
+            self.slider_phase_y.set_val(new_phiy_deg)
+        else:
+            # Elegimos t0 tal que: (phiy - phix) + 2π(fy - fx)(t - t0) = δ_des  → resolver t0
+            t = self.time
+            self.t0 = t - (delta_des - (phiy - phix)) / denom
+
+        # Limpiamos rastro para que se dibuje limpio con el nuevo anclaje
+        self.trail_points_x.clear()
+        self.trail_points_y.clear()
+        self.fig.canvas.draw_idle()
+
+
+
     
     def start_simulation(self, event):
         self.is_running = True
@@ -445,7 +575,7 @@ class CRTSimulation:
     def animate(self, frame):
         """Función de animación principal"""
         if self.is_running:
-            self.time += 0.05  # Incremento de tiempo
+            self.time += self.dt  
             
             # Calcular nueva posición
             self.current_position = self.calculate_position(self.time)
